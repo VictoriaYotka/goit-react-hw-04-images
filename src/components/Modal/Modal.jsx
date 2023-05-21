@@ -7,8 +7,8 @@ useEffect(() => {
 
   return () => {
     window.removeEventListener('keydown', closeModal)
-  }
-}, [closeModal])
+  };
+}, []);
 
     return (
       <Overlay  onClick={closeModal}>

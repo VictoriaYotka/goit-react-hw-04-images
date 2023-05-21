@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { useState, useEffect } from "react";
 import { Report } from 'notiflix/build/notiflix-report-aio';
 import searchImages from "services";
 import Searchbar from "./Searchbar/Searchbar";
@@ -17,107 +17,96 @@ Report.init({
   },
 });
 
-export class App extends Component  {
-  state = {
-    query: '',
-    page: 1,
-    images: [],
-    largeImage:'',
-    isLoading: false,
-    loadMore: false,
-    isModalOpen: false,
-  }
+export function App () {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [largeImage, setLargeImage] = useState('');
+  const [loadMore, setLoadMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  componentDidUpdate (_, prevState) {
-    // console.log(this.state)
-    const { query, page } = this.state;
+  useEffect(() => {
+    if(query.trim() === '') return
 
-    if (prevState.query !== query || (prevState.query === query && prevState.page !== page)) {
-      this.fetchImages();
-    }
-  }
-
-  fetchImages = () => {
-    const { query, page, images } = this.state;
-    this.setState({isLoading: true})
+    setIsLoading(true)
     
     searchImages(query, page)
       .then(res => {
         const {hits} = res;
         
         if(page === 1 && hits.length === 0) {
-          this.setState({isLoading: false, loadMore: false});
+          setIsLoading(false);
+          setLoadMore(false);
+
           Report.info("Oops,we've found no images :(", " ", 'Try another search query');
           return 
         }
         const newImages = hits.map(({id, webformatURL, largeImageURL}) => {return {id, webformatURL, largeImageURL}})
     
-        this.setState(prevState => 
-          ({images: [...prevState.images, ...newImages]}))
+        setImages(prevState => [...prevState, ...newImages])
 
         if((images.length + newImages.length) < res.totalHits) {
-          this.setState({loadMore: true})
+          setLoadMore(true);
         } else {
-          this.setState({loadMore: false})
+          setLoadMore(false);
         }   
     })
       .catch(error => Report.info('Oops, something went wrong =(', ' ', 'Try again!'))
-      .finally(() => this.setState({isLoading: false}))
-  }
+      .finally(() => setIsLoading(false))
   
-  handleSubmit = (e) => {
-    const { query } = this.state;
+  }, [page, query])
+  
+  const handleSubmit = (e) => {
     const NewQuery = e.target.elements.searchFormInput.value;
 
     e.preventDefault();
 
+    if(NewQuery.trim() === '') {return}
+
     if(query !== NewQuery) {
-      this.setState({query: NewQuery, page: 1, images: []});
+      setQuery(NewQuery);
+      setPage(1);
+      setImages([]);
     } else {
       Report.info("you are already viewing images ", "for this request", 'Return');
-
     }
     
     e.target.reset()
   }
 
-  handleLoadMore = () => {
-    this.setState(prevState => ({page: prevState.page + 1})); 
+  const handleLoadMore = () => {
+    setPage(prevState => prevState + 1)
   }
 
-  openModal = (key) => {
-    const largeImage = this.state.images.find(image => image.id === key).largeImageURL;
-
-    this.setState({isModalOpen: true, largeImage});
+  const openModal = (key) => {
+    const image = images.find(image => image.id === key).largeImageURL;
+    setIsModalOpen(true);
+    setLargeImage(image)
   }
 
-  closeModal = (e) => {
-    
+  const closeModal = (e) => {
     if(e.key === 'Escape' || e.currentTarget === e.target) {
-      this.setState({isModalOpen: false});
+      setIsModalOpen(false)
     }  
   }
 
-  render () {
-    const {query, images, largeImage, isLoading, loadMore, isModalOpen} = this.state;
+  return (
+    <>
+    <Searchbar handleSubmit={handleSubmit}/>
     
-    return (
-      <>
-      <Searchbar handleSubmit={this.handleSubmit}/>
-      
-      <ImageGallery>
-        {images.map(({id, webformatURL}) => 
-          <ImageGalleryItem handleImageClick={()=>this.openModal(id)} key={id} webformatURL={webformatURL} alt={query}/>
-          )}
-      </ImageGallery>
-      
-      {isLoading && <Loader />}
-      
-      {loadMore && <Button handleLoadMore={this.handleLoadMore}/>}
-      
-      {isModalOpen &&  
-      <Modal src={largeImage} alt={query} closeModal={this.closeModal}/>}
-      </>
-    )
-  }
-};
+    <ImageGallery>
+      {images.map(({id, webformatURL}) => 
+        <ImageGalleryItem handleImageClick={()=>openModal(id)} key={id} webformatURL={webformatURL} alt={query}/>
+        )}
+    </ImageGallery>
+    
+    {isLoading && <Loader />}
+    
+    {loadMore && <Button handleLoadMore={handleLoadMore}/>}
+    
+    {isModalOpen &&  
+    <Modal src={largeImage} alt={query} closeModal={closeModal}/>}
+    </>
+  )
+}
