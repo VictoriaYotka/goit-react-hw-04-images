@@ -1,18 +1,14 @@
-import { Component } from "react"
+import { useEffect } from "react"
 import { Overlay, ModalDiv } from "./Modal.styled"
 
-export default class Modal extends Component {
+export default function Modal ({src, alt, closeModal}) {
+useEffect(() => {
+  window.addEventListener('keydown', closeModal)
 
-  componentDidMount () {
-    window.addEventListener('keydown', this.props.closeModal)
+  return () => {
+    window.removeEventListener('keydown', closeModal)
   }
-
-  componentWillUnmount () {
-    window.removeEventListener('keydown', this.props.closeModal)
-  }
-
-  render () {
-    const { closeModal, src, alt } = this.props
+}, [closeModal])
 
     return (
       <Overlay  onClick={closeModal}>
@@ -21,5 +17,4 @@ export default class Modal extends Component {
       </ModalDiv>
     </Overlay>
   )
-  }
 }

@@ -29,6 +29,7 @@ export class App extends Component  {
   }
 
   componentDidUpdate (_, prevState) {
+    // console.log(this.state)
     const { query, page } = this.state;
 
     if (prevState.query !== query || (prevState.query === query && prevState.page !== page)) {
@@ -91,6 +92,7 @@ export class App extends Component  {
   }
 
   closeModal = (e) => {
+    
     if(e.key === 'Escape' || e.currentTarget === e.target) {
       this.setState({isModalOpen: false});
     }  
