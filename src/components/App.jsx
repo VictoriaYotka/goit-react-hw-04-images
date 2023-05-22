@@ -54,7 +54,7 @@ export function App () {
     })
       .catch(error => Report.info('Oops, something went wrong =(', ' ', 'Try again!'))
       .finally(() => setIsLoading(false))
-  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, query])
   
   const handleSubmit = (e) => {
