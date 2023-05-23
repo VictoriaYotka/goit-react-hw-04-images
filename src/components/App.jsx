@@ -30,6 +30,7 @@ export function App () {
     if(query.trim() === '') return
 
     setIsLoading(true)
+    setLoadMore(false);
     
     searchImages(query, page)
       .then(res => {
@@ -44,17 +45,16 @@ export function App () {
         }
         const newImages = hits.map(({id, webformatURL, largeImageURL}) => {return {id, webformatURL, largeImageURL}})
     
-        setImages(prevState => [...prevState, ...newImages])
-
-        if((images.length + newImages.length) < res.totalHits) {
-          setLoadMore(true);
-        } else {
-          setLoadMore(false);
-        }   
+        setImages(prevState => {
+          if((prevState.length + newImages.length) < res.totalHits) {
+            setLoadMore(true);
+          } else {
+            setLoadMore(false);
+          }   
+          return [...prevState, ...newImages]}) 
     })
       .catch(error => Report.info('Oops, something went wrong =(', ' ', 'Try again!'))
       .finally(() => setIsLoading(false))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, query])
   
   const handleSubmit = (e) => {
